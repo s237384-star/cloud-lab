@@ -7,8 +7,9 @@ function App() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
 
+  // Lấy danh sách sinh viên
   useEffect(() => {
-    fetch("https://literate-memory-4g7jxwjvqjj355w9-5000.app.github.dev/api/students")
+    fetch("http://localhost:5000/api/students")
       .then((response) => response.json())
       .then((data) => {
         setStudents(data);
@@ -18,6 +19,7 @@ function App() {
       });
   }, []);
 
+  // Thêm sinh viên
   const handleSubmit = (e) => {
     e.preventDefault();
 
@@ -27,7 +29,7 @@ function App() {
       email: email,
     };
 
-    fetch("https://literate-memory-4g7jxwjvqjj355w9-5000.app.github.dev/api/students", {
+    fetch("http://localhost:5000/api/students", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -43,6 +45,72 @@ function App() {
         setStudentId("");
         setName("");
         setEmail("");
+      })
+      .catch((error) => {
+        console.error("Lỗi:", error);
+      });
+  };
+
+  // Cập nhật sinh viên
+  const handleUpdate = (student) => {
+    const newName = prompt("Nhập họ tên mới:", student.name);
+
+    if (newName === null) {
+      return;
+    }
+
+    const newEmail = prompt("Nhập email mới:", student.email);
+
+    if (newEmail === null) {
+      return;
+    }
+
+    fetch(`http://localhost:5000/api/students/${student._id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        studentId: student.studentId,
+        name: newName,
+        email: newEmail,
+      }),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        console.log("Đã cập nhật sinh viên:", data);
+
+        setStudents(
+          students.map((item) =>
+            item._id === data._id ? data : item
+          )
+        );
+      })
+      .catch((error) => {
+        console.error("Lỗi:", error);
+      });
+  };
+
+  // Xóa sinh viên
+  const handleDelete = (id) => {
+    const confirmDelete = window.confirm(
+      "Bạn có chắc muốn xóa sinh viên này không?"
+    );
+
+    if (!confirmDelete) {
+      return;
+    }
+
+    fetch(`http://localhost:5000/api/students/${id}`, {
+      method: "DELETE",
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        console.log("Đã xóa sinh viên:", data);
+
+        setStudents(
+          students.filter((student) => student._id !== id)
+        );
       })
       .catch((error) => {
         console.error("Lỗi:", error);
@@ -80,12 +148,15 @@ function App() {
         <button type="submit">Thêm sinh viên</button>
       </form>
 
+      <br />
+
       <table border="1" cellPadding="10">
         <thead>
           <tr>
             <th>MSSV</th>
             <th>Họ tên</th>
             <th>Email</th>
+            <th>Thao tác</th>
           </tr>
         </thead>
 
@@ -95,6 +166,18 @@ function App() {
               <td>{student.studentId}</td>
               <td>{student.name}</td>
               <td>{student.email}</td>
+
+              <td>
+                <button onClick={() => handleUpdate(student)}>
+                  Sửa
+                </button>
+
+                {" "}
+
+                <button onClick={() => handleDelete(student._id)}>
+                  Xóa
+                </button>
+              </td>
             </tr>
           ))}
         </tbody>
